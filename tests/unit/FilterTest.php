@@ -20,10 +20,23 @@ class FilterTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals("value", $filter->run(["key" => " value "])->data["key"]);
 		$this->assertEquals("value", $filter->run(["key" => "\t\t value\r\n"])->data["key"]);
 
+		
 		$filter = Filter::map(["key" => [Trim::create(" ")]]);
 
 		$this->assertEquals("value", $filter->run(["key" => " value  "])->data["key"]);
 		$this->assertEquals("\t\tvalue\n", $filter->run(["key" => "\t\tvalue\n "])->data["key"]);
+		
+		
+		$filter = Filter::map(["key" => "Trim, \t"]);
+
+		$this->assertEquals("value", $filter->run(["key" => " value  "])->data["key"]);
+		$this->assertEquals("value\n", $filter->run(["key" => "\t\tvalue\n "])->data["key"]);
+		
+		
+		$filter = Filter::map(["key" => Trim::class . ", \t" ]);
+
+		$this->assertEquals("value", $filter->run(["key" => " value  "])->data["key"]);
+		$this->assertEquals("value\n", $filter->run(["key" => "\t\tvalue\n "])->data["key"]);
 	}
 
 	public function testStringCaseFilters()

@@ -1,9 +1,19 @@
 <?php
 
+/**
+ * 
+ * @license https://github.com/icetomcat/filter/blob/master/LICENSE MIT
+ * @link https://github.com/filter/
+ */
+
 namespace Filter\Rules;
 
 use Filter\Base\Rule;
 
+/**
+ *
+ * @author icetomcat <icetomcat@gmail.com>
+ */
 class Equal extends Rule
 {
 
@@ -37,7 +47,7 @@ class Equal extends Rule
 
 	public function exec(\Filter\Context $context, $name)
 	{
-		if ( $this->from_context )
+		if ($this->from_context)
 		{
 			$this->expected = isset($context->data[$this->from_context]) ? $context->data[$this->from_context] : null;
 		}

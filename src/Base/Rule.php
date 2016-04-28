@@ -1,9 +1,9 @@
 <?php
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+/**
+ * 
+ * @license https://github.com/icetomcat/filter/blob/master/LICENSE MIT
+ * @link https://github.com/filter/
  */
 
 namespace Filter\Base;
@@ -14,9 +14,8 @@ use Filter\Exceptions\NextField;
 use Filter\Interfaces\IFilter;
 
 /**
- * Description of Filter
  *
- * @author icetomcat
+ * @author icetomcat <icetomcat@gmail.com>
  */
 abstract class Rule implements IFilter
 {
@@ -34,7 +33,7 @@ abstract class Rule implements IFilter
 
 	public function error($message = null)
 	{
-		throw new Error(is_null($message) ? $message : static::class);
+		throw new Error(is_null($message) ? static::class : $message);
 	}
 
 	public function exec(Context $context, $name)
@@ -42,7 +41,7 @@ abstract class Rule implements IFilter
 		$this->context = $context;
 		$res = $this->apply(isset($context->data[$name]) ? $context->data[$name] : null);
 		$this->context = null;
-		if ( !$res )
+		if (!$res)
 		{
 			$this->error();
 		}
@@ -50,7 +49,7 @@ abstract class Rule implements IFilter
 
 	public function apply($value)
 	{
-		if ( is_null($value) )
+		if (is_null($value))
 		{
 			throw new NextField();
 		}
