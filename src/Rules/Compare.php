@@ -96,6 +96,8 @@ class Compare extends Rule
 			{
 				case "?":
 					return $actual ? true : false;
+				case "!":
+					return !$actual;
 				case "==":
 					return $expected == $actual;
 				case "===":

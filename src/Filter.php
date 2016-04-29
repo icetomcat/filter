@@ -32,6 +32,7 @@ class Filter
 	 */
 	protected $pipe = array();
 	protected $translator = null;
+	protected $short_names = [];
 
 	/**
 	 * 
@@ -39,6 +40,8 @@ class Filter
 	public function __construct($translator = null)
 	{
 		$this->translator = $translator;
+		
+		$this->short_names["cmp"] = Rules\Compare::class;
 	}
 
 	public function setTranslator($translator)
