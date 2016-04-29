@@ -14,6 +14,10 @@ use Filter\Exceptions\NextField;
 use Filter\Exceptions\NextFilter;
 use Filter\Exceptions\Stop;
 use Filter\Interfaces\IFilter;
+use ReflectionClass;
+use Symfony\Component\Translation\Loader\YamlFileLoader;
+use Symfony\Component\Translation\MessageSelector;
+use Symfony\Component\Translation\Translator;
 
 /**
  *
@@ -27,13 +31,32 @@ class Filter
 	 * @var array 
 	 */
 	protected $pipe = array();
+	protected $translator = null;
 
 	/**
 	 * 
 	 */
-	public function __construct()
+	public function __construct($translator = null)
 	{
-		
+		$this->translator = $translator;
+	}
+
+	public function setTranslator($translator)
+	{
+		$this->translator = $translator;
+		foreach (array_diff(scandir($dir = __DIR__ . "/I18n"), array('..', '.')) as $item)
+		{
+			if(file_exists($file_name = ($dir . "/$item/messages.{$item}.yaml")))
+			{
+				$this->translator->addResource("yaml", $file_name, $item);
+			}
+		}
+		return $this;
+	}
+
+	public function getTranslator()
+	{
+		return $this->translator;
 	}
 
 	/**
@@ -50,7 +73,7 @@ class Filter
 			if (isset($matches[1]) && $matches[1])
 			{
 				$names = $matches[1];
-				$filters = [static::map($filters)];
+				$filters = [(new static($this->translator))->__map($filters)];
 			}
 			$names = str_getcsv($names);
 		}
@@ -79,27 +102,39 @@ class Filter
 					$filter = str_getcsv($filter);
 					$args = array_slice($filter, 1);
 					$filter = $filter[0];
+					$error_message = null;
+					preg_match("/(.*)\((.*)\)/", $filter, $matches);
+					if ($matches)
+					{
+						$filter = $matches[1];
+						$error_message = $matches[2];
+					}
 					$reflect = null;
 					if (class_exists($filter))
 					{
-						$reflect = new \ReflectionClass($filter);
+						$reflect = new ReflectionClass($filter);
 					}
 					elseif (class_exists($class = "\\Filter\\Filters\\" . $filter))
 					{
-						$reflect = new \ReflectionClass($class);
+						$reflect = new ReflectionClass($class);
 					}
 					elseif (class_exists($class = "\\Filter\\Rules\\" . $filter))
 					{
-						$reflect = new \ReflectionClass($class);
+						$reflect = new ReflectionClass($class);
 					}
 					if ($reflect && $reflect->implementsInterface(IFilter::class))
 					{
 						$class = $reflect->getName();
-						$this->pipe[] = [$name, $class::create(...$args)];
+						$filter = $class::create(...$args);
+						if ($filter instanceof Base\Rule)
+						{
+							$filter->setErrorMessage($error_message);
+						}
+						$this->pipe[] = [$name, $filter];
 					}
 					else
 					{
-						throw new Exception();
+						throw new Exception($filter);
 					}
 				}
 			}
@@ -115,21 +150,40 @@ class Filter
 	 */
 	static public function map(array $map)
 	{
-		$self = new static();
+		return (new static())->__map($map);
+	}
+
+	protected function __map(array $map)
+	{
 		foreach ($map as $names => $filters)
 		{
-			$self->addFilter($names, $filters);
+			$this->addFilter($names, $filters);
 		}
-		return $self;
+		return $this;
 	}
 
 	protected function exec(Context $parent, $name = null)
 	{
 		if (!is_null($name) && isset($parent->data[$name]))
 		{
-			$context = $this->run(new Context($parent->data[$name], $parent));
+			$context = $this->run(new Context($parent->data[$name], $this, $parent));
 			$parent->data[$name] = $context->data;
-			$parent->errors[$name] = $context->errors;
+			if ($context->errors)
+			{
+				$parent->errors[$name] = $context->errors;
+			}
+		}
+	}
+
+	public function trans($id, array $args = [])
+	{
+		if ($this->translator)
+		{
+			return $this->translator->trans($id, $args);
+		}
+		else
+		{
+			return strtr($id, $args);
 		}
 	}
 
@@ -142,7 +196,7 @@ class Filter
 	{
 		if (is_array($data))
 		{
-			$context = new Context($data);
+			$context = new Context($data, $this);
 		}
 		elseif ($data instanceof Context)
 		{
@@ -162,7 +216,7 @@ class Filter
 				}
 				catch (Error $exc)
 				{
-					$context->errors[$filter[0]] = $exc->getMessage();
+					$context->errors[$filter[0]] = $this->trans($exc->getMessage(), $exc->getArgs());
 					throw new Stop;
 				}
 				catch (NextField $exc)

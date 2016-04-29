@@ -25,25 +25,42 @@ abstract class Rule implements IFilter
 	 * @var Context
 	 */
 	protected $context = null;
+	protected $error_message = null;
 
 	static public function create(...$args)
 	{
 		return new static(...$args);
 	}
 
-	public function error($message = null)
+	protected function error(Context $context, $name)
 	{
-		throw new Error(is_null($message) ? static::class : $message);
+		throw (new Error($this->error_message ? $this->error_message : strtolower(str_replace("\\", ".", static::class))))->setArgs(["%name%" => $name, "%value%" => $context->getValue($name)]);
+	}
+
+	public function createError($message = null, $args = [])
+	{
+		throw (new Error(is_null($message) ? static::class : $message))->setArgs($args);
+	}
+
+	public function setErrorMessage($message)
+	{
+		$this->error_message = $message;
+		return $this;
+	}
+
+	public function getErrorMessage($defalut = null)
+	{
+		return $this->error_message ? $this->error_message : $defalut;
 	}
 
 	public function exec(Context $context, $name)
 	{
 		$this->context = $context;
-		$res = $this->apply(isset($context->data[$name]) ? $context->data[$name] : null);
+		$res = $this->apply($context->getValue($name));
 		$this->context = null;
 		if (!$res)
 		{
-			$this->error();
+			$this->error($context, $name);
 		}
 	}
 

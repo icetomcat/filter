@@ -31,9 +31,9 @@ abstract class Filter implements IFilter
 		return new static(...$args);
 	}
 
-	public function error($message = null)
+	protected function error(Context $context, $name)
 	{
-		throw new Error(is_null($message) ? $message : static::class);
+		throw new Error();
 	}
 
 	public function exec(Context $context, $name)
@@ -41,7 +41,7 @@ abstract class Filter implements IFilter
 		$this->context = $context;
 		if (isset($context->data[$name]))
 		{
-			$context->data[$name] = $this->apply(isset($context->data[$name]) ? $context->data[$name] : null);
+			$context->data[$name] = $this->apply($context->getValue($name));
 		}
 		$this->context = null;
 	}

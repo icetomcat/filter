@@ -1,0 +1,12 @@
+'filter.rules.compare': %name% не прошел проверку%
+'filter.rules.compare.?': %name% не должен быть пустым%
+'filter.rules.compare.==': %name% не совпадает с %expected%
+'filter.rules.compare.===': %name% не совпадает с %expected%
+'filter.rules.compare.!=': %name% не должне совпадать с %expected%
+'filter.rules.compare.!==': %name% не должне совпадать с %expected%
+'filter.rules.compare.>': %name% должен быть больше %expected%
+'filter.rules.compare.>=': %name% должен быть больше либо равен %expected%
+'filter.rules.compare.<': %name% должен быть меньше %expected%
+'filter.rules.compare.<=': %name% должен быть меньше либо равен %expected%
+'filter.rules.compare.&&': %name% и %expected должны быть истинными
+'filter.rules.compare.||': %name% или %expected должны быть истинными
