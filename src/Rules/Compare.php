@@ -9,10 +9,10 @@
 namespace Filter\Rules;
 
 use Closure;
-use Exception;
 use Filter\Base\Rule;
 use Filter\Context;
 use Filter\Exceptions\Error;
+use Filter\Filter;
 
 /**
  *
@@ -24,16 +24,16 @@ class Compare extends Rule
 	protected $op;
 	protected $expected;
 	protected $with;
-	protected $prepare;
+	protected $filter;
 
 	/**
 	 * 
 	 * @param Closure $op
 	 * @param mixed $expected
 	 * @param string $with
-	 * @param mixed $prepare Function
+	 * @param mixed $filter
 	 */
-	public function __construct($op = "?", $expected = null, $with = null, $prepare = null)
+	public function __construct($op = "?", $expected = null, $with = null, $filter = null)
 	{
 		if ($op instanceof Closure)
 		{
@@ -45,11 +45,22 @@ class Compare extends Rule
 		}
 		$this->expected = $expected;
 		$this->with = $with;
-		if ($prepare && !is_callable($prepare))
+		if ($filter instanceof Filter)
 		{
-			throw new Exception();
+			$this->filter = $filter;
 		}
-		$this->prepare = $prepare;
+		elseif (is_string($filter))
+		{
+			$this->filter = Filter::map($filter);
+		}
+		elseif (is_array($filter))
+		{
+			$this->filter = Filter::map($filter);
+		}
+		else
+		{
+			$this->filter = null;
+		}
 	}
 
 	/**
@@ -57,7 +68,7 @@ class Compare extends Rule
 	 * @param Closure $op
 	 * @param mixed $expected
 	 * @param string $with
-	 * @param mixed $prepare Function
+	 * @param mixed $filter
 	 */
 	public static function create(...$args)
 	{
@@ -80,7 +91,7 @@ class Compare extends Rule
 
 	public function apply($actual)
 	{
-		$actual = $this->prepare ? call_user_func($this->prepare, $actual) : $actual;
+		$actual = $this->filter ? $this->filter->run([$actual])->data[0] : $actual;
 		$expected = $this->expected;
 		if (is_string($this->with))
 		{

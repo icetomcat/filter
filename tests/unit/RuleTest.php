@@ -8,10 +8,16 @@ class RuleTest extends PHPUnit_Framework_TestCase
 
 	public function testCompare()
 	{
-		$filter = Filter::map(["key" => [Compare::create(">=", 6, null, "str_word_count")]]);
+		$filter = Filter::map([Compare::create(">=", 6, null, "Trim;Words")]);
+		$context = $filter->run("Some sentence");
+		$this->assertCount(1, $context->errors);
 		
-		$context = $filter->run(["key" => "Some sentence"]);
+		$filter = Filter::map([Compare::create(">=", 6, null, "Trim;Length")]);
+		$context = $filter->run("Some sentence");
+		$this->assertCount(0, $context->errors);
 		
+		$filter = Filter::map([Compare::create(">=", 6, null, "Trim;Length")]);
+		$context = $filter->run("            ");
 		$this->assertCount(1, $context->errors);
 	}
 

@@ -8,25 +8,16 @@
 
 namespace Filter\Filters;
 
-use Filter\Base\Filter;
-
 /**
  *
  * @author icetomcat <icetomcat@gmail.com>
  */
-class Costome extends Filter
+class Count extends \Filter\Base\Filter
 {
 
-	public $fn;
-
-	public function __construct(\Closure $apply)
+	public function apply($arr)
 	{
-		$this->fn = $apply->bindTo($this);
-	}
-
-	public function apply($value)
-	{
-		return $this->fn($value);
+		return count($arr);
 	}
 
 }

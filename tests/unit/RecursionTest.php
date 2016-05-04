@@ -13,7 +13,7 @@ class RecursionTest extends PHPUnit_Framework_TestCase
 						"password" => "Compare,===,,confirm"
 					],
 					"[profile]" => [
-						"first_name,last_name,middle_name" => ["Trim", "Lower", "FirstUpper"]
+						"first_name,last_name,middle_name" => "Trim;Lower;FirstUpper"
 					]
 		]);
 

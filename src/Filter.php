@@ -40,7 +40,7 @@ class Filter
 	public function __construct($translator = null)
 	{
 		$this->translator = $translator;
-		
+
 		$this->short_names["cmp"] = Rules\Compare::class;
 	}
 
@@ -49,7 +49,7 @@ class Filter
 		$this->translator = $translator;
 		foreach (array_diff(scandir($dir = __DIR__ . "/I18n"), array('..', '.')) as $item)
 		{
-			if(file_exists($file_name = ($dir . "/$item/messages.{$item}.yaml")))
+			if (file_exists($file_name = ($dir . "/$item/messages.{$item}.yaml")))
 			{
 				$this->translator->addResource("yaml", $file_name, $item);
 			}
@@ -70,7 +70,11 @@ class Filter
 	 */
 	public function addFilter($names, $filters)
 	{
-		if (is_string($names))
+		if (is_int($names))
+		{
+			$names = [$names];
+		}
+		elseif (is_string($names))
 		{
 			preg_match("/\[(.*)\]/", $names, $matches);
 			if (isset($matches[1]) && $matches[1])
@@ -86,13 +90,13 @@ class Filter
 		}
 		foreach ($names as $name)
 		{
-			if (!is_string($name))
+			if (!is_string($name) && !is_int($name))
 			{
 				throw new Exception;
 			}
-			if (!is_array($filters))
+			if (is_string($filters))
 			{
-				$filters = [$filters];
+				$filters = str_getcsv($filters, ";");
 			}
 			foreach ($filters as $key => $filter)
 			{
@@ -147,20 +151,32 @@ class Filter
 
 	/**
 	 * 
-	 * @param array $map
+	 * @param string|array $map
 	 * @return Filter
 	 * @throws Exception
 	 */
-	static public function map(array $map)
+	static public function map($map)
 	{
 		return (new static())->__map($map);
 	}
 
-	protected function __map(array $map)
+	protected function __map($map)
 	{
-		foreach ($map as $names => $filters)
+		if (is_string($map))
 		{
-			$this->addFilter($names, $filters);
+			$this->addFilter(0, $map);
+		}
+		elseif (is_array($map))
+		{
+			foreach ($map as $names => $filters)
+			{
+				if (is_int($names))
+				{
+					$this->addFilter(0, $map);
+					break;
+				}
+				$this->addFilter($names, $filters);
+			}
 		}
 		return $this;
 	}
@@ -197,14 +213,20 @@ class Filter
 	 */
 	public function run($data)
 	{
-		if (is_array($data))
-		{
-			$context = new Context($data, $this);
-		}
-		elseif ($data instanceof Context)
+
+		if ($data instanceof Context)
 		{
 			$context = $data;
 		}
+		else
+		{
+			if (!is_array($data))
+			{
+				$data = [$data];
+			}
+			$context = new Context($data, $this);
+		}
+
 		try
 		{
 			foreach ($this->pipe as $filter)
