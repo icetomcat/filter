@@ -54,5 +54,15 @@ abstract class Filter implements IFilter
 		}
 		return $value;
 	}
+	
+	static public function creatFromShortName($name, ...$args)
+	{
+		return static::create($name, ...$args);
+	}
+
+	static public function getShortNames()
+	{
+		return [];
+	}
 
 }

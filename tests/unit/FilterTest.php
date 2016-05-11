@@ -60,5 +60,21 @@ class FilterTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals("Τάχιστη", $context->data["first_up"]);
 		$this->assertEquals("τάχιστη", $context->data["first_low"]);
 	}
+	
+	public function testToBooleanFilter()
+	{
+		$filter = Filter::map(["to bool"]);
+		$this->assertSame(true, $filter->run("yes")->data[0]);
+		$this->assertSame(true, $filter->run("true")->data[0]);
+		$this->assertSame(true, $filter->run("1")->data[0]);
+		$this->assertSame(true, $filter->run("on")->data[0]);
+		$this->assertSame(false, $filter->run("no")->data[0]);
+		$this->assertSame(false, $filter->run("false")->data[0]);
+		$this->assertSame(false, $filter->run("0")->data[0]);
+		$this->assertSame(false, $filter->run("off")->data[0]);
+		$this->assertSame(false, $filter->run("")->data[0]);
+		
+		$this->assertSame(false, $filter->run("oops")->data[0]);
+	}
 
 }

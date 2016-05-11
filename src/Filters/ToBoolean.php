@@ -12,12 +12,18 @@ namespace Filter\Filters;
  *
  * @author icetomcat <icetomcat@gmail.com>
  */
-class LTrim extends Trim
+class ToBoolean extends \Filter\Base\Filter
 {
 
 	public function apply($value)
 	{
-		return ltrim($value, $this->character_mask);
+		return filter_var($value, FILTER_VALIDATE_BOOLEAN);
 	}
+	
+	public static function getShortNames()
+	{
+		return ["to bool", "to boolean"];
+	}
+
 
 }

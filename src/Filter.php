@@ -55,12 +55,18 @@ class Filter
 		$this->translate_postfix = $translate_postfix;
 		$this->translate_use_name = $translate_use_name;
 		$this->pipe = new Pipe($this);
-		foreach (array_diff(scandir($dir = __DIR__ . "/Rules"), array('..', '.')) as $item)
+		$this->loadFiltersFromDir(__DIR__ . "/Rules", "\\Filter\\Rules\\");
+		$this->loadFiltersFromDir(__DIR__ . "/Filters", "\\Filter\\Filters\\");
+	}
+	
+	public function loadFiltersFromDir($dir, $namespace)
+	{
+		foreach (array_diff(scandir($dir), array('..', '.')) as $item)
 		{
 			if (pathinfo($item, PATHINFO_EXTENSION) == "php")
 			{
-				$class = "\\Filter\\Rules\\" . pathinfo($item, PATHINFO_FILENAME);
-				if (count($short_names = $class::getShortNames()) > 0)
+				$class = $namespace . pathinfo($item, PATHINFO_FILENAME);
+				if (class_exists($class) && count($short_names = $class::getShortNames()) > 0)
 				{
 					foreach ($short_names as $value)
 					{

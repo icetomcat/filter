@@ -18,12 +18,12 @@ class Boolean extends Rule
 {
 	public function apply($actual)
 	{
-		return filter_var($actual, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) !== null;
+		return !is_null(filter_var($actual, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE));
 	}
 	
 	public static function getShortNames()
 	{
-		return ["bool", "boolean"];
+		return ["bool", "boolean", "is bool", "is boolean"];
 	}
 
 }
