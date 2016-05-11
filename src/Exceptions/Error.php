@@ -16,7 +16,19 @@ class Error extends \Exception
 {
 
 	protected $args = [];
+	protected $name = null;
+	
+	public function setName($name)
+	{
+		$this->name = $name;
+		return $this;
+	}
 
+	public function getName()
+	{
+		return $this->name;
+	}
+	
 	public function setArgs(array $args = [])
 	{
 		$this->args = $args;

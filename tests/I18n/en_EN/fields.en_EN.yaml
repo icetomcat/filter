@@ -1,5 +1,5 @@
-'password': password
-'user': user
-'confirm': confirm
-'num': num
-'my.rule.compare.===': passwords is not equal
+'phpunit.password': password
+'phpunit.user': user
+'phpunit.confirm': confirm
+'phpunit.num': num
+'phpunit.filter.rule.compare.===.confirm.password': passwords is not equal

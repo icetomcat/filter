@@ -9,15 +9,15 @@
 namespace Filter;
 
 use Exception;
+use Filter\Base\Rule;
 use Filter\Exceptions\Error;
 use Filter\Exceptions\NextField;
 use Filter\Exceptions\NextFilter;
 use Filter\Exceptions\Stop;
 use Filter\Interfaces\IFilter;
 use ReflectionClass;
-use Symfony\Component\Translation\Loader\YamlFileLoader;
-use Symfony\Component\Translation\MessageSelector;
 use Symfony\Component\Translation\Translator;
+use Symfony\Component\Translation\TranslatorInterface;
 
 /**
  *
@@ -30,21 +30,81 @@ class Filter
 	 *
 	 * @var array 
 	 */
-	protected $pipe = array();
+	protected $pipe;
+
+	/**
+	 *
+	 * @var Translator
+	 */
 	protected $translator = null;
 	protected $short_names = [];
+	protected $translate_prefix = "";
+	protected $translate_postfix = "";
+	protected $translate_use_name = false;
 
 	/**
 	 * 
 	 */
-	public function __construct($translator = null)
+	public function __construct(Translator $translator = null, $translate_prefix = "", $translate_postfix = "", $translate_use_name = false)
 	{
-		$this->translator = $translator;
-
-		$this->short_names["cmp"] = Rules\Compare::class;
+		if ($translator)
+		{
+			$this->setTranslator($translator);
+		}
+		$this->translate_prefix = $translate_prefix;
+		$this->translate_postfix = $translate_postfix;
+		$this->translate_use_name = $translate_use_name;
+		$this->pipe = new Pipe($this);
+		foreach (array_diff(scandir($dir = __DIR__ . "/Rules"), array('..', '.')) as $item)
+		{
+			if (pathinfo($item, PATHINFO_EXTENSION) == "php")
+			{
+				$class = "\\Filter\\Rules\\" . pathinfo($item, PATHINFO_FILENAME);
+				if (count($short_names = $class::getShortNames()) > 0)
+				{
+					foreach ($short_names as $value)
+					{
+						$this->short_names[$value] = $class;
+					}
+				}
+			}
+		}
 	}
 
-	public function setTranslator($translator)
+	public function setTranslatePrefix($translate_prefix)
+	{
+		$this->translate_prefix = $translate_prefix;
+		return $this;
+	}
+
+	public function getTranslatePrefix()
+	{
+		return $this->translate_prefix;
+	}
+
+	public function setTranslatePostfix($translate_postfix)
+	{
+		$this->translate_postfix = $translate_postfix;
+		return $this;
+	}
+
+	public function getTranslatePostfix()
+	{
+		return $this->translatePostfix;
+	}
+
+	public function setTranslateUseName($translate_use_name)
+	{
+		$this->translate_use_name = $translate_use_name;
+		return $this;
+	}
+
+	public function getTranslatUseName()
+	{
+		return $this->translate_use_name;
+	}
+
+	public function setTranslator(TranslatorInterface $translator)
 	{
 		$this->translator = $translator;
 		foreach (array_diff(scandir($dir = __DIR__ . "/I18n"), array('..', '.')) as $item)
@@ -104,9 +164,12 @@ class Filter
 				{
 					$this->pipe[] = [$name, $filter];
 				}
-				elseif (is_string($filter))
+				elseif (is_string($filter) || is_array($filter))
 				{
-					$filter = str_getcsv($filter);
+					if (is_string($filter))
+					{
+						$filter = str_getcsv($filter);
+					}
 					$args = array_slice($filter, 1);
 					$filter = $filter[0];
 					$error_message = null;
@@ -117,23 +180,11 @@ class Filter
 						$error_message = $matches[2];
 					}
 					$reflect = null;
-					if (class_exists($filter))
+					if (isset($this->short_names[$filter]))
 					{
-						$reflect = new ReflectionClass($filter);
-					}
-					elseif (class_exists($class = "\\Filter\\Filters\\" . $filter))
-					{
-						$reflect = new ReflectionClass($class);
-					}
-					elseif (class_exists($class = "\\Filter\\Rules\\" . $filter))
-					{
-						$reflect = new ReflectionClass($class);
-					}
-					if ($reflect && $reflect->implementsInterface(IFilter::class))
-					{
-						$class = $reflect->getName();
-						$filter = $class::create(...$args);
-						if ($filter instanceof Base\Rule)
+						$class = $this->short_names[$filter];
+						$filter = $class::creatFromShortName($filter, ...$args);
+						if ($filter instanceof Rule)
 						{
 							$filter->setErrorMessage($error_message);
 						}
@@ -141,7 +192,32 @@ class Filter
 					}
 					else
 					{
-						throw new Exception($filter);
+						if (class_exists($filter))
+						{
+							$reflect = new ReflectionClass($filter);
+						}
+						elseif (class_exists($class = "\\Filter\\Filters\\" . $filter))
+						{
+							$reflect = new ReflectionClass($class);
+						}
+						elseif (class_exists($class = "\\Filter\\Rules\\" . $filter))
+						{
+							$reflect = new ReflectionClass($class);
+						}
+						if ($reflect && $reflect->implementsInterface(IFilter::class))
+						{
+							$class = $reflect->getName();
+							$filter = $class::create(...$args);
+							if ($filter instanceof Rule)
+							{
+								$filter->setErrorMessage($error_message);
+							}
+							$this->pipe[] = [$name, $filter];
+						}
+						else
+						{
+							throw new Exception($filter);
+						}
 					}
 				}
 			}
@@ -194,15 +270,23 @@ class Filter
 		}
 	}
 
-	public function trans($id, array $args = [])
+	public function trans($id, array $args = [], $domain = null, $locale = null)
 	{
+		$fid = ($this->translate_prefix ? $this->translate_prefix . "." : "") . $id . ($this->translate_postfix ? "." . $this->translate_postfix : "");
 		if ($this->translator)
 		{
-			return $this->translator->trans($id, $args);
+			if ($this->translator->getCatalogue()->has($fid))
+			{
+				return $this->translator->trans($fid, $args, $domain, $locale);
+			}
+			else
+			{
+				return $this->translator->trans($id, $args, $domain, $locale);
+			}
 		}
 		else
 		{
-			return strtr($id, $args);
+			return strtr($fid, $args);
 		}
 	}
 
@@ -241,7 +325,7 @@ class Filter
 				}
 				catch (Error $exc)
 				{
-					$context->errors[$filter[0]] = $this->trans($exc->getMessage(), $exc->getArgs());
+					$context->errors[$filter[0]] = $this->trans($exc->getMessage() . ($this->translate_use_name ? "." . $exc->getName() : ""), $exc->getArgs());
 					throw new Stop;
 				}
 				catch (NextField $exc)

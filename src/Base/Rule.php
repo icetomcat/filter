@@ -8,6 +8,7 @@
 
 namespace Filter\Base;
 
+use Exception;
 use Filter\Context;
 use Filter\Exceptions\Error;
 use Filter\Exceptions\NextField;
@@ -34,12 +35,12 @@ abstract class Rule implements IFilter
 
 	protected function error(Context $context, $name)
 	{
-		throw (new Error($this->error_message ? $this->error_message : strtolower(str_replace("\\", ".", static::class))))->setArgs(["%name%" => $name, "%value%" => $context->getValue($name)]);
+		throw (new Error($this->error_message ? $this->error_message : static::getTranslateId()))->setName($name)->setArgs(["%name%" => $name, "%value%" => $context->getValue($name)]);
 	}
 
 	public function createError($message = null, $args = [])
 	{
-		throw (new Error(is_null($message) ? static::class : $message))->setArgs($args);
+		throw (new Error(is_null($message) ? static::getTranslateId() : $message))->setArgs($args);
 	}
 
 	public function setErrorMessage($message)
@@ -51,6 +52,17 @@ abstract class Rule implements IFilter
 	public function getErrorMessage($defalut = null)
 	{
 		return $this->error_message ? $this->error_message : $defalut;
+	}
+
+	static public function getTranslateId()
+	{
+		static $id = null;
+		if (is_null($id))
+		{
+			$refl = new \ReflectionClass(static::class);
+			$id = "filter.rule." . strtolower($refl->getName());
+		}
+		return $id;
 	}
 
 	public function exec(Context $context, $name)
@@ -71,6 +83,16 @@ abstract class Rule implements IFilter
 			throw new NextField();
 		}
 		return true;
+	}
+
+	static public function creatFromShortName($name, ...$args)
+	{
+		return static::create($name, ...$args);
+	}
+
+	static public function getShortNames()
+	{
+		return [];
 	}
 
 }

@@ -9,6 +9,7 @@
 namespace Filter\Rules;
 
 use Closure;
+use Exception;
 use Filter\Base\Rule;
 use Filter\Context;
 use Filter\Exceptions\Error;
@@ -82,11 +83,11 @@ class Compare extends Rule
 		{
 			$expected = $context->trans($this->with);
 		}
-		throw (new Error($this->getErrorMessage("filter.rules.compare.{$this->op}")))->setArgs([
+		throw (new Error($this->getErrorMessage("filter.rule.compare.{$this->op}")))->setArgs([
 			"%value%" => $context->getValue($name),
 			"%name%" => $context->trans($name),
 			"%expected%" => $expected
-		]);
+		])->setName(is_string($this->with) ? $name . "." . $this->with : $name);
 	}
 
 	public function apply($actual)
@@ -134,6 +135,23 @@ class Compare extends Rule
 					return false;
 			}
 		}
+	}
+
+	static public function creatFromShortName($name, ...$args)
+	{
+		if (in_array($name, static::getShortNames()))
+		{
+			return static::create($name, ...$args);
+		}
+		else
+		{
+			throw new Exception($name);
+		}
+	}
+
+	static public function getShortNames()
+	{
+		return ["?", "!", "==", "===", "!=", "!==", ">", ">=", "<", "<=", "&&", "||"];
 	}
 
 }

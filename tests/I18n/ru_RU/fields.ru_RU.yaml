@@ -1,5 +1,5 @@
-'password': пароль
-'user': пользователь
-'confirm': подтверждение
-'num': число
-'my.rule.compare.===': пароли не совпадают
+'phpunit.password': пароль
+'phpunit.user': пользователь
+'phpunit.confirm': подтверждение
+'phpunit.num': число
+'phpunit.filter.rule.compare.===.confirm.password': пароли не совпадают

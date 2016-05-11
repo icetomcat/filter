@@ -23,18 +23,18 @@ class I18nTestTest extends PHPUnit_Framework_TestCase
 	public function testI18nEqual()
 	{
 		$filter = Filter::map([
-					"password" => "Compare(my.rule.compare.===),===,,confirm"
-				])->setTranslator($this->translator);
+					"confirm" => "Compare,===,,password"
+				])->setTranslator($this->translator)->setTranslateUseName(true)->setTranslatePrefix("phpunit");
 
 		$context = $filter->run(["password" => "pass", "confirm" => "wrong"]);
-		$this->assertEquals("пароли не совпадают", $context->errors["password"]);
+		$this->assertEquals("пароли не совпадают", $context->errors["confirm"]);
 
 		$this->translator->setLocale("en_EN");
 		$context = $filter->run(["password" => "pass", "confirm" => "wrong"]);
-		$this->assertEquals("passwords is not equal", $context->errors["password"]);
+		$this->assertEquals("passwords is not equal", $context->errors["confirm"]);
 
 		$this->translator->setLocale("ru_RU");
-		$filter = Filter::map(["num" => "Compare,>=,5"])->setTranslator($this->translator);
+		$filter = Filter::map(["num" => "Compare,>=,5"])->setTranslator($this->translator)->setTranslatePrefix("phpunit");
 		$context = $filter->run(["num" => "4"]);
 		$this->assertEquals("число должен быть больше либо равен 5", $context->errors["num"]);
 	}
