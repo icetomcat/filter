@@ -58,7 +58,7 @@ class Filter
 		$this->loadFiltersFromDir(__DIR__ . "/Rules", "\\Filter\\Rules\\");
 		$this->loadFiltersFromDir(__DIR__ . "/Filters", "\\Filter\\Filters\\");
 	}
-	
+
 	public function loadFiltersFromDir($dir, $namespace)
 	{
 		foreach (array_diff(scandir($dir), array('..', '.')) as $item)
@@ -212,7 +212,7 @@ class Filter
 						}
 						if ($reflect && $reflect->implementsInterface(IFilter::class))
 						{
-							$class = $reflect->getName();
+							$class = $reflect->getShortName();
 							$filter = $class::create(...$args);
 							if ($filter instanceof Rule)
 							{
@@ -279,9 +279,10 @@ class Filter
 	public function trans($id, array $args = [], $domain = null, $locale = null)
 	{
 		$fid = ($this->translate_prefix ? $this->translate_prefix . "." : "") . $id . ($this->translate_postfix ? "." . $this->translate_postfix : "");
+
 		if ($this->translator)
 		{
-			if ($this->translator->getCatalogue()->has($fid))
+			if ($this->translator->getCatalogue()->has($fid) || $this->translate_use_name)
 			{
 				return $this->translator->trans($fid, $args, $domain, $locale);
 			}
@@ -323,7 +324,10 @@ class Filter
 			{
 				try
 				{
-					$filter[1]->exec($context, $filter[0]);
+					if (!isset($context->errors[$filter[0]]))
+					{
+						$filter[1]->exec($context, $filter[0]);
+					}
 				}
 				catch (NextFilter $exc)
 				{
@@ -332,7 +336,6 @@ class Filter
 				catch (Error $exc)
 				{
 					$context->errors[$filter[0]] = $this->trans($exc->getMessage() . ($this->translate_use_name ? "." . $exc->getName() : ""), $exc->getArgs());
-					throw new Stop;
 				}
 				catch (NextField $exc)
 				{

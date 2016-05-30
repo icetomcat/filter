@@ -60,7 +60,7 @@ abstract class Rule implements IFilter
 		if (is_null($id))
 		{
 			$refl = new \ReflectionClass(static::class);
-			$id = "filter.rule." . strtolower($refl->getName());
+			$id = "filter.rule." . strtolower($refl->getShortName());
 		}
 		return $id;
 	}
