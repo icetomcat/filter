@@ -16,8 +16,6 @@ use Filter\Exceptions\NextFilter;
 use Filter\Exceptions\Stop;
 use Filter\Interfaces\IFilter;
 use ReflectionClass;
-use Symfony\Component\Translation\Translator;
-use Symfony\Component\Translation\TranslatorInterface;
 
 /**
  *
@@ -31,29 +29,19 @@ class Filter
 	 * @var array 
 	 */
 	protected $pipe;
-
-	/**
-	 *
-	 * @var Translator
-	 */
-	protected $translator = null;
 	protected $short_names = [];
-	protected $translate_prefix = "";
-	protected $translate_postfix = "";
-	protected $translate_use_name = false;
+	protected $prefix = "";
+	protected $postfix = "";
+	protected $use_name = false;
 
 	/**
 	 * 
 	 */
-	public function __construct(Translator $translator = null, $translate_prefix = "", $translate_postfix = "", $translate_use_name = false)
+	public function __construct($prefix = "", $postfix = "", $use_name = false)
 	{
-		if ($translator)
-		{
-			$this->setTranslator($translator);
-		}
-		$this->translate_prefix = $translate_prefix;
-		$this->translate_postfix = $translate_postfix;
-		$this->translate_use_name = $translate_use_name;
+		$this->prefix = $prefix;
+		$this->postfix = $postfix;
+		$this->use_name = $use_name;
 		$this->pipe = new Pipe($this);
 		$this->loadFiltersFromDir(__DIR__ . "/Rules", "\\Filter\\Rules\\");
 		$this->loadFiltersFromDir(__DIR__ . "/Filters", "\\Filter\\Filters\\");
@@ -77,55 +65,37 @@ class Filter
 		}
 	}
 
-	public function setTranslatePrefix($translate_prefix)
+	public function setPrefix($prefix)
 	{
-		$this->translate_prefix = $translate_prefix;
+		$this->prefix = $prefix;
 		return $this;
 	}
 
-	public function getTranslatePrefix()
+	public function getPrefix()
 	{
-		return $this->translate_prefix;
+		return $this->prefix;
 	}
 
-	public function setTranslatePostfix($translate_postfix)
+	public function setPostfix($postfix)
 	{
-		$this->translate_postfix = $translate_postfix;
+		$this->postfix = $postfix;
 		return $this;
 	}
 
-	public function getTranslatePostfix()
+	public function getPostfix()
 	{
 		return $this->translatePostfix;
 	}
 
-	public function setTranslateUseName($translate_use_name)
+	public function setUseName($use_name)
 	{
-		$this->translate_use_name = $translate_use_name;
+		$this->use_name = $use_name;
 		return $this;
 	}
 
-	public function getTranslatUseName()
+	public function getUseName()
 	{
-		return $this->translate_use_name;
-	}
-
-	public function setTranslator(TranslatorInterface $translator)
-	{
-		$this->translator = $translator;
-		foreach (array_diff(scandir($dir = __DIR__ . "/I18n"), array('..', '.')) as $item)
-		{
-			if (file_exists($file_name = ($dir . "/$item/messages.{$item}.yaml")))
-			{
-				$this->translator->addResource("yaml", $file_name, $item);
-			}
-		}
-		return $this;
-	}
-
-	public function getTranslator()
-	{
-		return $this->translator;
+		return $this->use_name;
 	}
 
 	/**
@@ -146,7 +116,7 @@ class Filter
 			if (isset($matches[1]) && $matches[1])
 			{
 				$names = $matches[1];
-				$filters = [(new static($this->translator))->__map($filters)];
+				$filters = [static::createFromFilter($this, $filters)];
 			}
 			$names = str_getcsv($names);
 		}
@@ -212,7 +182,7 @@ class Filter
 						}
 						if ($reflect && $reflect->implementsInterface(IFilter::class))
 						{
-							$class = $reflect->getShortName();
+							$class = $reflect->getName();
 							$filter = $class::create(...$args);
 							if ($filter instanceof Rule)
 							{
@@ -231,15 +201,20 @@ class Filter
 		return $this;
 	}
 
+	static public function createFromFilter(Filter $filter, $map)
+	{
+		return (new static($filter->prefix, $filter->postfix, $filter->use_name))->__map($map);
+	}
+
 	/**
 	 * 
 	 * @param string|array $map
 	 * @return Filter
 	 * @throws Exception
 	 */
-	static public function map($map)
+	static public function map($map, ...$args)
 	{
-		return (new static())->__map($map);
+		return (new static(...$args))->__map($map);
 	}
 
 	protected function __map($map)
@@ -276,25 +251,11 @@ class Filter
 		}
 	}
 
-	public function trans($id, array $args = [], $domain = null, $locale = null)
+	public function trans($id, array $args = [])
 	{
-		$fid = ($this->translate_prefix ? $this->translate_prefix . "." : "") . $id . ($this->translate_postfix ? "." . $this->translate_postfix : "");
+		$fid = ($this->prefix ? $this->prefix . "." : "") . $id . ($this->postfix ? "." . $this->postfix : "");
 
-		if ($this->translator)
-		{
-			if ($this->translator->getCatalogue()->has($fid) || $this->translate_use_name)
-			{
-				return $this->translator->trans($fid, $args, $domain, $locale);
-			}
-			else
-			{
-				return $this->translator->trans($id, $args, $domain, $locale);
-			}
-		}
-		else
-		{
-			return strtr($fid, $args);
-		}
+		return strtr($fid, $args);
 	}
 
 	/**
@@ -335,7 +296,7 @@ class Filter
 				}
 				catch (Error $exc)
 				{
-					$context->errors[$filter[0]] = $this->trans($exc->getMessage() . ($this->translate_use_name ? "." . $exc->getName() : ""), $exc->getArgs());
+					$context->errors[$filter[0]] = $this->trans($exc->getMessage() . ($this->use_name ? "." . $exc->getName() : ""), $exc->getArgs());
 				}
 				catch (NextField $exc)
 				{
