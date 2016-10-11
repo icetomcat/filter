@@ -42,9 +42,9 @@ class Context
 		return $this->filter->trans($id, $args);
 	}
 
-	public function getNormalizedErrors($path_glue = "/")
+	public function getNormalizedErrors($path_glue = "/", $path = "")
 	{
-		return static::normalize($this->errors, "", $path_glue);
+		return static::normalize($this->errors, $path, $path_glue);
 	}
 
 	static protected function __normalize($array, &$result = [], $path = "", $path_glue = "/")
@@ -67,6 +67,7 @@ class Context
 
 	static public function normalize(array $array, $start_path = "", $path_glue = "/")
 	{
+		$result = [];
 		static::__normalize($array, $result, $start_path, $path_glue);
 		return $result;
 	}
