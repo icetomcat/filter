@@ -116,7 +116,14 @@ class Filter
 			if (isset($matches[1]) && $matches[1])
 			{
 				$names = $matches[1];
-				$filters = [static::createFromFilter($this, $filters)];
+				if (!$filters instanceof Filter)
+				{
+					$filters = [static::createFromFilter($this, $filters)];
+				}
+				else
+				{
+					$filters = [$filters];
+				}
 			}
 			$names = str_getcsv($names);
 		}
@@ -124,6 +131,7 @@ class Filter
 		{
 			throw new Exception;
 		}
+
 		foreach ($names as $name)
 		{
 			if (!is_string($name) && !is_int($name))
