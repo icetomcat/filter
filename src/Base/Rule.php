@@ -75,6 +75,11 @@ abstract class Rule implements IFilter
 			$this->error($context, $name);
 		}
 	}
+	
+	public function getContext()
+	{
+		return $this->context;
+	}
 
 	public function apply($value)
 	{

@@ -26,7 +26,8 @@ class Custom extends \Filter\Base\Rule
 
 	public function apply($value)
 	{
-		return $this->fn($value);
+		$fn = $this->fn;
+		return $fn($value);
 	}
 
 }
