@@ -27,6 +27,13 @@ abstract class Rule implements IFilter
 	 */
 	protected $context = null;
 	protected $error_message = null;
+	protected $name;
+
+	public function __construct()
+	{
+		$class = explode("\\", static::class);
+		$this->name = strtolower(end($class));
+	}
 
 	static public function create(...$args)
 	{
@@ -35,12 +42,12 @@ abstract class Rule implements IFilter
 
 	protected function error(Context $context, $name)
 	{
-		throw (new Error($this->error_message ? $this->error_message : static::getTranslateId()))->setName($name)->setArgs(["%name%" => $name, "%value%" => $context->getValue($name)]);
+		throw (new Error($this->error_message ? $this->error_message : $this->getTranslateId()))->setName($name)->setArgs(["%name%" => $name, "%value%" => $context->getValue($name)]);
 	}
 
 	public function createError($message = null, $args = [])
 	{
-		throw (new Error(is_null($message) ? static::getTranslateId() : $message))->setArgs($args);
+		throw (new Error(is_null($message) ? $this->getTranslateId() : $message))->setArgs($args);
 	}
 
 	public function setErrorMessage($message)
@@ -54,15 +61,9 @@ abstract class Rule implements IFilter
 		return $this->error_message ? $this->error_message : $defalut;
 	}
 
-	static public function getTranslateId()
+	public function getTranslateId()
 	{
-		static $id = null;
-		if (is_null($id))
-		{
-			$refl = new \ReflectionClass(static::class);
-			$id = "filter.rule." . strtolower($refl->getShortName());
-		}
-		return $id;
+		return "filter.rule." . $this->name;
 	}
 
 	public function exec(Context $context, $name)
@@ -75,7 +76,7 @@ abstract class Rule implements IFilter
 			$this->error($context, $name);
 		}
 	}
-	
+
 	public function getContext()
 	{
 		return $this->context;

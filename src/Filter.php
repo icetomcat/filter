@@ -263,7 +263,7 @@ class Filter
 	{
 		$fid = ($this->prefix ? $this->prefix . "." : "") . $id . ($this->postfix ? "." . $this->postfix : "");
 
-		return $id;
+		return $fid;
 	}
 
 	/**

@@ -18,9 +18,11 @@ class Custom extends \Filter\Base\Rule
 {
 
 	public $fn;
+	public $name;
 
-	public function __construct(Closure $apply)
+	public function __construct($name, Closure $apply)
 	{
+		$this->name = $name;
 		$this->fn = $apply->bindTo($this);
 	}
 
@@ -29,5 +31,11 @@ class Custom extends \Filter\Base\Rule
 		$fn = $this->fn;
 		return $fn($value);
 	}
+	
+	public function getTranslateId()
+	{
+		return "filter.rule." . $this->name;
+	}
+
 
 }
