@@ -14,7 +14,7 @@ use Filter\Base\Rule;
  *
  * @author icetomcat <icetomcat@gmail.com>
  */
-class Boolean extends Rule
+class IsBoolean extends Rule
 {
 	public function apply($actual)
 	{

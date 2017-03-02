@@ -12,7 +12,7 @@ namespace Filter\Rules;
  *
  * @author icetomcat <icetomcat@gmail.com>
  */
-class Integer extends \Filter\Base\Rule
+class IsInteger extends \Filter\Base\Rule
 {
 	public function apply($actual)
 	{

@@ -1,7 +1,7 @@
 <?php
 
 use Filter\Filter;
-use Filter\Rules\Boolean;
+use Filter\Rules\IsBoolean;
 use Filter\Rules\Compare;
 
 class RuleTest extends PHPUnit_Framework_TestCase
@@ -29,9 +29,9 @@ class RuleTest extends PHPUnit_Framework_TestCase
 		$this->assertCount(1, $context->errors);
 	}
 
-	public function testBoolean()
+	public function testIsBoolean()
 	{
-		$filter = Filter::map([Boolean::create()]);
+		$filter = Filter::map([IsBoolean::create()]);
 		$this->assertCount(0, $filter->run("yes")->errors);
 		$this->assertCount(0, $filter->run("true")->errors);
 		$this->assertCount(0, $filter->run("1")->errors);

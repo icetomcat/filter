@@ -12,7 +12,7 @@ namespace Filter\Rules;
  *
  * @author icetomcat <icetomcat@gmail.com>
  */
-class Float extends \Filter\Base\Rule
+class IsFloat extends \Filter\Base\Rule
 {
 	public function apply($actual)
 	{
@@ -21,6 +21,6 @@ class Float extends \Filter\Base\Rule
 	
 	public static function getShortNames()
 	{
-		return ["float", "double"];
+		return ["float", "double", "is float"];
 	}
 }
